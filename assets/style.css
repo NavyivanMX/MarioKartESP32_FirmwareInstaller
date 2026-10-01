@@ -1,0 +1,100 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #f5f5f5;
+  background: #111;
+  --accent: #ff7a00;
+  --accent-soft: #ff9a3c;
+  --card: #1c1c1c;
+  --panel: #151515;
+  --border: #333;
+  --muted: #aaa;
+  --success: #68d391;
+  --danger: #ff7373;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top, #292929, #0d0d0d 65%); }
+.container { width: min(980px, 94%); margin: 0 auto; padding: 32px 0 48px; }
+.hero { display: flex; align-items: center; gap: 18px; margin-bottom: 24px; }
+.logo { font-size: 54px; }
+h1 { margin: 0; font-size: clamp(28px, 5vw, 44px); }
+.hero p { margin: 4px 0 0; color: #bbb; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 22px; margin: 16px 0; box-shadow: 0 10px 30px #0005; }
+h2 { margin-top: 0; }
+h3 { margin-top: 0; }
+.hint { color: #bbb; line-height: 1.5; }
+.hint.small { font-size: 14px; }
+.browser-note { margin-top: 14px; padding: 12px 14px; background: #111; border-radius: 10px; color: #ccc; }
+.firmware-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.firmware-card {
+  border: 1px solid var(--border); background: #151515; color: inherit; border-radius: 14px;
+  padding: 18px; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
+}
+.firmware-card span { font-size: 34px; }
+.firmware-card strong { font-size: 20px; }
+.firmware-card small { color: #aaa; }
+.firmware-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.version, .device-info, .status { margin-top: 14px; padding: 12px; border-radius: 10px; background: #111; color: #ccc; }
+.status.compact { margin-top: 12px; }
+.success-box { border: 1px solid #276749; color: var(--success); }
+.error-box { border: 1px solid #7f1d1d; color: var(--danger); }
+button, .secondary {
+  font: inherit; border-radius: 12px; padding: 13px 18px; border: 0; cursor: pointer;
+  text-decoration: none; display: inline-block; text-align: center;
+}
+.primary { background: var(--accent); color: #111; font-weight: 800; width: 100%; }
+.primary:disabled, .secondary:disabled { opacity: .45; cursor: not-allowed; }
+.secondary { background: #333; color: #fff; }
+.secondary.full { width: 100%; margin-top: 12px; }
+.progress-wrap { margin-top: 18px; display: grid; grid-template-columns: 1fr 60px; gap: 12px; align-items: center; }
+.progress-bar { height: 18px; background: #333; border-radius: 20px; overflow: hidden; }
+#progressBar { width: 0; height: 100%; background: var(--accent); transition: width .15s linear; }
+#progressText { text-align: right; font-weight: 700; }
+.config-panel { margin-top: 18px; padding: 18px; background: var(--panel); border: 1px solid #3a3a3a; border-radius: 14px; }
+.hidden { display: none !important; }
+.panel-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.mac-display { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mac-display code { flex: 1; min-width: 220px; padding: 13px 15px; border-radius: 10px; background: #080808; border: 1px solid #333; font-size: 18px; letter-spacing: .08em; }
+.copy-button { background: #333; color: #fff; }
+label { display: block; font-weight: 700; margin: 12px 0 7px; }
+.mac-input-row { display: flex; gap: 10px; }
+input {
+  width: 100%; min-width: 0; padding: 13px 15px; border-radius: 10px; border: 1px solid #444;
+  background: #080808; color: #fff; font: inherit; font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .08em;
+}
+input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.field-message { min-height: 20px; padding-top: 7px; font-size: 13px; }
+.field-message.success { color: var(--success); }
+.field-message.error { color: var(--danger); }
+.guide-tabs { display: flex; gap: 10px; margin-bottom: 18px; }
+.guide-tab { background: #111; color: #bbb; border: 1px solid #333; flex: 1; font-weight: 700; }
+.guide-tab.active { color: #111; background: var(--accent); border-color: var(--accent); }
+.guide-content { display: none; }
+.guide-content.active { display: block; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 650px; }
+th, td { padding: 11px 10px; border-bottom: 1px solid #333; text-align: left; vertical-align: top; }
+th { color: #ddd; background: #111; }
+td { color: #c9c9c9; }
+td code, .rumble-box code { color: #fff; background: #080808; padding: 2px 5px; border-radius: 5px; }
+.wiring-notes, .warning { margin-top: 16px; padding: 13px 15px; border-radius: 10px; line-height: 1.5; }
+.wiring-notes { background: #111; color: #ccc; }
+.warning { background: #2a1e12; border: 1px solid #6a431b; color: #ffd8ad; }
+.rumble-box { margin-top: 20px; padding: 18px; border: 1px solid #3a3a3a; border-radius: 14px; background: #151515; }
+.rumble-box ol { line-height: 1.8; color: #ccc; }
+.workflow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.workflow div { background: #111; border-radius: 12px; padding: 14px 10px; text-align: center; color: #bbb; }
+.workflow b { display: grid; place-items: center; width: 32px; height: 32px; margin: 0 auto 8px; border-radius: 50%; background: var(--accent); color: #111; }
+.logs-card summary { cursor: pointer; color: #ccc; }
+pre { white-space: pre-wrap; max-height: 300px; overflow: auto; color: #bbb; }
+footer { text-align: center; color: #777; margin-top: 24px; font-size: 13px; }
+@media (max-width: 760px) {
+  .firmware-grid, .workflow { grid-template-columns: 1fr; }
+  .workflow div { text-align: left; display: flex; align-items: center; gap: 10px; }
+  .workflow b { margin: 0; flex: 0 0 32px; }
+}
+@media (max-width: 560px) {
+  .mac-input-row { flex-direction: column; }
+  .guide-tabs { flex-direction: column; }
+  .mac-display code { min-width: 100%; }
+}
