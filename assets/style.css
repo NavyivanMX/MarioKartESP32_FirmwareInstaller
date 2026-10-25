@@ -56,6 +56,9 @@ button, .secondary {
 .mac-display code { flex: 1; min-width: 220px; padding: 13px 15px; border-radius: 10px; background: #080808; border: 1px solid #333; font-size: 18px; letter-spacing: .08em; }
 .copy-button { background: #333; color: #fff; }
 label { display: block; font-weight: 700; margin: 12px 0 7px; }
+.led-count-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+input[type="number"] { letter-spacing: normal; font-family: inherit; }
+#ledConfigStatus { line-height: 1.45; }
 .mac-input-row { display: flex; gap: 10px; }
 input {
   width: 100%; min-width: 0; padding: 13px 15px; border-radius: 10px; border: 1px solid #444;
@@ -95,6 +98,7 @@ footer { text-align: center; color: #777; margin-top: 24px; font-size: 13px; }
 }
 @media (max-width: 560px) {
   .mac-input-row { flex-direction: column; }
+  .led-count-grid { grid-template-columns: 1fr; }
   .guide-tabs { flex-direction: column; }
   .mac-display code { min-width: 100%; }
 }

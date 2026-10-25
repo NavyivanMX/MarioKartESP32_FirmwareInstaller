@@ -57,6 +57,26 @@
         </div>
       </div>
 
+      <div id="receiverLedConfigPanel" class="config-panel hidden">
+        <div class="panel-title">💡 Cantidad de LEDs del Receiver</div>
+        <p class="hint small">
+          Configura cuántos LEDs tiene instalada cada tira WS2812B. Los valores se guardan en la memoria NVS del Receiver y se aplican al reiniciarlo.
+        </p>
+        <div class="led-count-grid">
+          <div>
+            <label for="ambientLedCount">Luces ambientales (GPIO 19)</label>
+            <input id="ambientLedCount" type="number" min="1" max="255" step="1" value="6" inputmode="numeric">
+          </div>
+          <div>
+            <label for="rearLedCount">Luces traseras (GPIO 4)</label>
+            <input id="rearLedCount" type="number" min="1" max="255" step="1" value="2" inputmode="numeric">
+          </div>
+        </div>
+        <button id="saveLedCountsButton" class="secondary full" type="button" disabled>💾 GUARDAR CANTIDAD DE LEDS</button>
+        <div id="ledConfigStatus" class="status compact">Instala primero el firmware del Receiver para consultar o guardar la configuración.</div>
+        <p class="hint small">Rango permitido por cada tira: 1 a 255 LEDs. Verifica que el firmware del Receiver incluya la configuración MKCFG de LEDs.</p>
+      </div>
+
       <div id="transmitterConfigPanel" class="config-panel hidden">
         <div class="panel-title">🎯 Receiver del Transmitter</div>
         <p class="hint small">

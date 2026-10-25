@@ -86,7 +86,11 @@ function selectFirmware(kind) {
   $("firmwareVersion").textContent = `Firmware: ${cfg.name} · versión ${cfg.version}`;
 
   $("receiverMacPanel").classList.toggle("hidden", kind !== "receiver");
+  $("receiverLedConfigPanel").classList.toggle("hidden", kind !== "receiver");
   $("transmitterConfigPanel").classList.toggle("hidden", kind !== "transmitter");
+  $("saveLedCountsButton").disabled = !(connected && firmwareInstalled && kind === "receiver");
+  $("ledConfigStatus").textContent = "Instala primero el firmware del Receiver para consultar o guardar la configuración.";
+  $("ledConfigStatus").className = "status compact";
   $("installHint").textContent = kind === "receiver"
     ? "Instala el firmware y conserva la MAC mostrada para configurar después el Transmitter."
     : "Primero instala el firmware. Después podrás guardar la MAC del Receiver en la memoria NVS del Transmitter.";
@@ -201,9 +205,16 @@ async function flashFirmware() {
       $("receiverMac").textContent = detectedMac || "MAC no disponible";
       $("receiverMacPanel").classList.remove("hidden");
       setStatus(`✓ Receiver instalado correctamente. MAC: ${detectedMac || "no disponible"}`);
+      $("saveLedCountsButton").disabled = false;
+      $("ledConfigStatus").textContent = "Firmware instalado. Consultando la configuración LED actual...";
+      $("ledConfigStatus").className = "status compact";
+      await new Promise(resolve => setTimeout(resolve, 900));
+      await tryReadExistingReceiverConfig();
     } else {
       setStatus("✓ Transmitter instalado correctamente. Ahora puedes guardar la MAC del Receiver.");
       setMacValidation();
+      await new Promise(resolve => setTimeout(resolve, 900));
+      await tryReadExistingTransmitterConfig();
     }
   } catch (error) {
     firmwareInstalled = false;
@@ -217,66 +228,260 @@ async function flashFirmware() {
 
 async function closeEspToolTransport() {
   if (transport) {
-    try { await transport.disconnect(); } catch (_) {}
+    try { 
+      log(`Serial antes de desconectar: readable=${!!port?.readable}, writable=${!!port?.writable}`);
+      await transport.disconnect(); 
+      log(`Serial después de desconectar: readable=${!!port?.readable}, writable=${!!port?.writable}`);
+    } catch (_) {}
   }
 }
 
-async function openApplicationSerial() {
-  await closeEspToolTransport();
 
+
+
+async function openApplicationSerial() {
   if (!port) {
     throw new Error("No hay puerto serial conectado.");
   }
 
-  if (!port.readable && !port.writable) {
-    await port.open({ baudRate: 115200 });
+  // Desconectar esptool una sola vez.
+  if (transport) {
+    const oldTransport = transport;
+    transport = null;
+    esploader = null;
+
+    try {
+      await oldTransport.disconnect();
+    } catch (error) {
+      log(`Aviso al desconectar esptool: ${error.message || error}`);
+    }
   }
+
+  // Dar tiempo al sistema operativo para liberar el puerto.
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  // Si el puerto sigue abierto, reutilizarlo.
+  if (port.readable && port.writable) {
+    log("Puerto serial disponible para comandos de aplicación.");
+    return;
+  }
+
+  // Si ambos extremos están cerrados, abrir el puerto.
+  if (port.readable === null && port.writable === null) {
+    await port.open({ baudRate: 115200 });
+    await new Promise(resolve => setTimeout(resolve, 300));
+    log("Puerto serial abierto a 115200 baudios.");
+    return;
+  }
+
+  throw new Error(
+    `Estado serial inconsistente: readable=${!!port.readable}, writable=${!!port.writable}. Desconecta y vuelve a conectar el ESP32.`
+  );
 }
 
-async function sendApplicationCommand(command, timeoutMs = 1800) {
+
+
+
+
+async function sendApplicationCommand(
+  command,
+  timeoutMs = 2500,
+  completionPredicate = null
+) {
   await openApplicationSerial();
 
-  const writer = port.writable.getWriter();
-  const encoder = new TextEncoder();
-  try {
-    await writer.write(encoder.encode(`${command}\r\n`));
-  } finally {
-    writer.releaseLock();
+  if (!port.readable || !port.writable) {
+    throw new Error("El puerto serial no está disponible.");
   }
 
+  // Adquirir primero el lector para no perder una respuesta temprana.
   const reader = port.readable.getReader();
-  const decoder = new TextDecoder();
+  let writer = null;
   let response = "";
-  const deadline = Date.now() + timeoutMs;
+  const decoder = new TextDecoder();
+  let pendingRead = null;
+  let timedOut = false;
 
   try {
+    writer = port.writable.getWriter();
+
+    // El firmware procesa el comando al recibir LF.
+    await writer.write(
+      new TextEncoder().encode(`${command}\n`)
+    );
+
+    writer.releaseLock();
+    writer = null;
+
+    const deadline = Date.now() + timeoutMs;
+
     while (Date.now() < deadline) {
-      const remaining = Math.max(100, deadline - Date.now());
+      const remaining = deadline - Date.now();
+
+      pendingRead = reader.read();
+
+      let timerId;
       const result = await Promise.race([
-        reader.read(),
-        new Promise(resolve => setTimeout(() => resolve({ timeout: true }), remaining))
+        pendingRead.then(value => ({
+          kind: "read",
+          value
+        })),
+        new Promise(resolve => {
+          timerId = setTimeout(
+            () => resolve({ kind: "timeout" }),
+            remaining
+          );
+        })
       ]);
 
-      if (result.timeout) break;
-      if (result.done) break;
-      response += decoder.decode(result.value, { stream: true });
+      clearTimeout(timerId);
 
-      if (response.includes("MKCFG OK") || response.includes("MKCFG CUSTOM_MAC=") || response.includes("MKCFG ERROR")) {
+      if (result.kind === "timeout") {
+        timedOut = true;
+        break;
+      }
+
+      pendingRead = null;
+
+      if (result.value.done) {
+        break;
+      }
+
+      response += decoder.decode(result.value.value, {
+        stream: true
+      });
+
+      const normalized = response.replace(/\r/g, "");
+
+      if (
+        completionPredicate &&
+        completionPredicate(normalized)
+      ) {
         break;
       }
     }
   } finally {
-    reader.releaseLock();
+    if (writer) {
+      try {
+        writer.releaseLock();
+      } catch (_) {}
+    }
+
+    if (timedOut && pendingRead) {
+      try {
+        await reader.cancel();
+      } catch (_) {}
+
+      try {
+        await pendingRead;
+      } catch (_) {}
+
+      pendingRead = null;
+    }
+
+    try {
+      reader.releaseLock();
+    } catch (_) {}
   }
 
+  response += decoder.decode();
+
   log(`CMD> ${command}`);
-  if (response.trim()) log(`ESP32> ${response.trim()}`);
+
+  if (response.trim()) {
+    log(`ESP32> ${response.trim()}`);
+  } else {
+    log("ESP32> (sin respuesta)");
+  }
+
   return response;
+}
+
+
+
+async function tryReadExistingReceiverConfig() {
+  try {
+    const response = await sendApplicationCommand(
+      "MKCFG GET",
+      1800,
+      text => text.includes("MKCFG AMBIENT_LEDS=") && text.includes("MKCFG REAR_LEDS=")
+    );
+    const ambient = response.match(/MKCFG AMBIENT_LEDS=(\d+)/i);
+    const rear = response.match(/MKCFG REAR_LEDS=(\d+)/i);
+
+    if (ambient && rear) {
+      $("ambientLedCount").value = ambient[1];
+      $("rearLedCount").value = rear[1];
+      $("ledConfigStatus").textContent = `Configuración actual leída del Receiver: ${ambient[1]} LEDs ambientales y ${rear[1]} LEDs traseros.`;
+      $("ledConfigStatus").className = "status compact success-box";
+    } else {
+      $("ledConfigStatus").textContent = "No se pudo leer la configuración actual. Puedes introducir los valores y guardarlos manualmente.";
+      $("ledConfigStatus").className = "status compact error-box";
+    }
+  } catch (error) {
+    log(`No fue posible consultar la configuración LED: ${error.message || error}`);
+    $("ledConfigStatus").textContent = "No se pudo consultar la configuración automáticamente. Verifica la conexión serial e intenta guardar los valores manualmente.";
+    $("ledConfigStatus").className = "status compact error-box";
+  }
+}
+
+function validateLedCountInput(input) {
+  const value = Number(input.value);
+  const valid = Number.isInteger(value) && value >= 1 && value <= 255;
+  input.setAttribute("aria-invalid", valid ? "false" : "true");
+  $("saveLedCountsButton").disabled = !(valid &&
+    Number.isInteger(Number($("ambientLedCount").value)) && Number($("ambientLedCount").value) >= 1 && Number($("ambientLedCount").value) <= 255 &&
+    Number.isInteger(Number($("rearLedCount").value)) && Number($("rearLedCount").value) >= 1 && Number($("rearLedCount").value) <= 255 &&
+    connected && firmwareInstalled && selectedFirmware === "receiver");
+  return valid;
+}
+
+async function saveReceiverLedCounts() {
+  if (!connected || !firmwareInstalled || selectedFirmware !== "receiver") {
+    $("ledConfigStatus").textContent = "Instala primero el firmware del Receiver.";
+    $("ledConfigStatus").className = "status compact error-box";
+    return;
+  }
+
+  const ambient = Number($("ambientLedCount").value);
+  const rear = Number($("rearLedCount").value);
+  if (!Number.isInteger(ambient) || ambient < 1 || ambient > 255 ||
+      !Number.isInteger(rear) || rear < 1 || rear > 255) {
+    $("ledConfigStatus").textContent = "Cada cantidad debe ser un número entero entre 1 y 255.";
+    $("ledConfigStatus").className = "status compact error-box";
+    validateLedCountInput($("ambientLedCount"));
+    validateLedCountInput($("rearLedCount"));
+    return;
+  }
+
+  const button = $("saveLedCountsButton");
+  button.disabled = true;
+  $("ledConfigStatus").textContent = "Guardando cantidad de LEDs en la memoria NVS del Receiver...";
+  $("ledConfigStatus").className = "status compact";
+
+  try {
+    const ambientResponse = await sendApplicationCommand(`MKCFG SET AMBIENT_LEDS=${ambient}`, 2200, text => text.includes("MKCFG OK") || text.includes("MKCFG ERROR"));
+    if (!ambientResponse.includes("MKCFG OK")) throw new Error("El Receiver no confirmó AMBIENT_LEDS.");
+
+    const rearResponse = await sendApplicationCommand(`MKCFG SET REAR_LEDS=${rear}`, 2200, text => text.includes("MKCFG OK") || text.includes("MKCFG ERROR"));
+    if (!rearResponse.includes("MKCFG OK")) throw new Error("El Receiver no confirmó REAR_LEDS.");
+
+    $("ledConfigStatus").textContent = `✓ Guardado: ${ambient} LEDs ambientales y ${rear} LEDs traseros. Reinicia el Receiver para aplicar los cambios.`;
+    $("ledConfigStatus").className = "status compact success-box";
+    setStatus("✓ Cantidad de LEDs guardada en NVS. Reinicia el Receiver para aplicar la configuración.");
+  } catch (error) {
+    $("ledConfigStatus").textContent = `Error al guardar: ${error.message || error}`;
+    $("ledConfigStatus").className = "status compact error-box";
+    setStatus(`No fue posible guardar la cantidad de LEDs: ${error.message || error}`);
+  } finally {
+    validateLedCountInput($("ambientLedCount"));
+    validateLedCountInput($("rearLedCount"));
+  }
 }
 
 async function tryReadExistingTransmitterConfig() {
   try {
-    const response = await sendApplicationCommand("MKCFG GET", 1200);
+    const response = await sendApplicationCommand("MKCFG GET", 1500, text => text.includes("MKCFG CUSTOM_MAC="));
     const match = response.match(/MKCFG CUSTOM_MAC=([0-9A-Fa-f:]{17}|NONE)/);
     if (!match) return;
 
@@ -365,6 +570,9 @@ $("clearMacButton").addEventListener("click", () => {
   setMacValidation();
 });
 $("copyMacButton").addEventListener("click", copyReceiverMac);
+$("saveLedCountsButton").addEventListener("click", saveReceiverLedCounts);
+$("ambientLedCount").addEventListener("input", () => validateLedCountInput($("ambientLedCount")));
+$("rearLedCount").addEventListener("input", () => validateLedCountInput($("rearLedCount")));
 
 if (CONFIG.apkUrl) {
   $("apkButton").href = CONFIG.apkUrl;
