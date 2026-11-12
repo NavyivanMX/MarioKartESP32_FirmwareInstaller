@@ -160,7 +160,7 @@ generar-bin.bat
 
 El script te pedirá las rutas de las carpetas de compilación. Puedes generar solo el Receiver, solo el Transmitter o ambos
 C:\Users\narci\Documents\Arduino\MarioKartESP32\Receiver\build\esp32.esp32.esp32
-C:\Users\narci\Documents\Arduino\MarioKartESP32\Transmitter\build\esp32.p32.esp32
+C:\Users\narci\Documents\Arduino\MarioKartESP32\Transmitter\build\esp32.esp32.esp32
 
 
 Si Windows no encuentra esptool, abre una terminal y ejecuta:

@@ -187,7 +187,7 @@ async function flashFirmware() {
 
     await esploader.writeFlash({
       fileArray: [{ data, address: 0x0 }],
-      flashMode: "qio",
+      flashMode: "dio",
       flashFreq: "80m",
       flashSize: "4MB",
       eraseAll: false,
@@ -239,48 +239,71 @@ async function closeEspToolTransport() {
 
 
 
+
 async function openApplicationSerial() {
   if (!port) {
     throw new Error("No hay puerto serial conectado.");
   }
 
-  // Desconectar esptool una sola vez.
+  logSerialState("Antes de liberar esptool");
+
   if (transport) {
     const oldTransport = transport;
+
+    // Evitar reutilizar referencias al transporte anterior.
     transport = null;
     esploader = null;
 
     try {
       await oldTransport.disconnect();
+      log("Transporte de esptool desconectado.");
     } catch (error) {
       log(`Aviso al desconectar esptool: ${error.message || error}`);
     }
   }
 
-  // Dar tiempo al sistema operativo para liberar el puerto.
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // Si el puerto sigue abierto, reutilizarlo.
-  if (port.readable && port.writable) {
-    log("Puerto serial disponible para comandos de aplicación.");
+  logSerialState("Después de desconectar esptool");
+
+  if (port.readable !== null && port.writable !== null) {
+    log("El puerto sigue abierto; se reutilizará.");
     return;
   }
 
-  // Si ambos extremos están cerrados, abrir el puerto.
   if (port.readable === null && port.writable === null) {
+    log("Abriendo el puerto para comandos de aplicación...");
     await port.open({ baudRate: 115200 });
-    await new Promise(resolve => setTimeout(resolve, 300));
-    log("Puerto serial abierto a 115200 baudios.");
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    logSerialState("Puerto abierto para aplicación");
     return;
   }
 
   throw new Error(
-    `Estado serial inconsistente: readable=${!!port.readable}, writable=${!!port.writable}. Desconecta y vuelve a conectar el ESP32.`
+    "El puerto quedó en estado parcial. " +
+    `readable=${port.readable !== null}, ` +
+    `writable=${port.writable !== null}`
   );
 }
 
 
 
+
+function logSerialState(label) {
+  if (!port) {
+    log(`[SERIAL] ${label}: port=null`);
+    return;
+  }
+
+  log(
+    `[SERIAL] ${label}: ` +
+    `readable=${port.readable !== null}, ` +
+    `writable=${port.writable !== null}, ` +
+    `connected=${port.readable !== null && port.writable !== null}`
+  );
+}
 
 
 async function sendApplicationCommand(
@@ -290,6 +313,10 @@ async function sendApplicationCommand(
 ) {
   await openApplicationSerial();
 
+  log("Esperando el arranque completo del Receiver...");
+  await new Promise(resolve => setTimeout(resolve, 3000));
+  log("Fin de espera. Preparando el comando serial.");
+
   if (!port.readable || !port.writable) {
     throw new Error("El puerto serial no está disponible.");
   }
@@ -298,6 +325,8 @@ async function sendApplicationCommand(
   const reader = port.readable.getReader();
   let writer = null;
   let response = "";
+  logSerialState(`Preparado para enviar ${command}`);
+log("Adquiriendo lector serial...");
   const decoder = new TextDecoder();
   let pendingRead = null;
   let timedOut = false;
@@ -306,9 +335,12 @@ async function sendApplicationCommand(
     writer = port.writable.getWriter();
 
     // El firmware procesa el comando al recibir LF.
-    await writer.write(
-      new TextEncoder().encode(`${command}\n`)
-    );
+log(`Enviando comando: ${JSON.stringify(command + "\n")}`);
+
+const bytesSent = new TextEncoder().encode(`${command}\n`);
+await writer.write(bytesSent);
+
+log(`Bytes enviados: ${bytesSent.length}`);
 
     writer.releaseLock();
     writer = null;
@@ -336,20 +368,27 @@ async function sendApplicationCommand(
 
       clearTimeout(timerId);
 
-      if (result.kind === "timeout") {
-        timedOut = true;
-        break;
-      }
-
+if (result.kind === "timeout") {
+  timedOut = true;
+  log(`Tiempo agotado esperando respuesta a ${command}.`);
+  break;
+}
       pendingRead = null;
 
-      if (result.value.done) {
-        break;
-      }
+if (result.value.done) {
+  log("La lectura serial terminó (done=true).");
+  break;
+}
 
-      response += decoder.decode(result.value.value, {
-        stream: true
-      });
+const chunk = result.value.value;
+
+log(`Bytes recibidos en bloque: ${chunk.length}`);
+
+response += decoder.decode(chunk, {
+  stream: true
+});
+
+log(`Respuesta acumulada: ${JSON.stringify(response)}`);
 
       const normalized = response.replace(/\r/g, "");
 

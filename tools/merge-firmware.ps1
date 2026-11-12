@@ -95,7 +95,7 @@ function Merge-Firmware([string]$Name, [string]$BuildPath) {
     $esptoolArgs += @(
         "--chip", "esp32", "merge-bin",
         "-o", $outFile,
-        "--flash-mode", "qio",
+        "--flash-mode", "dio",
         "--flash-freq", "80m",
         "--flash-size", "4MB",
         "0x1000", $files.Bootloader,

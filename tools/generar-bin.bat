@@ -15,9 +15,6 @@ echo.
 set /p RECEIVER_PATH=Ruta de la carpeta build del Receiver: 
 set /p TRANSMITTER_PATH=Ruta de la carpeta build del Transmitter: 
 
-set "RECEIVER_PATH=C:\Users\narci\Documents\Arduino\MarioKartESP32\Receiver\build\esp32.esp32.esp32"
-set "TRANSMITTER_PATH=C:\Users\narci\Documents\Arduino\MarioKartESP32\Transmitter\build\esp32.esp32.esp32"
-
 if "%RECEIVER_PATH%"=="" if "%TRANSMITTER_PATH%"=="" (
   echo.
   echo ERROR: Debes indicar al menos una carpeta build.
