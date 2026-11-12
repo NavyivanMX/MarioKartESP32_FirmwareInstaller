@@ -91,6 +91,88 @@ td code, .rumble-box code { color: #fff; background: #080808; padding: 2px 5px; 
 .logs-card summary { cursor: pointer; color: #ccc; }
 pre { white-space: pre-wrap; max-height: 300px; overflow: auto; color: #bbb; }
 footer { text-align: center; color: #eee8e8; margin-top: 24px; font-size: 1rem; }
+/* Tarjeta de Donación */
+  .donation-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 10px;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .donation-icon {
+    font-size: 28px;
+    background: #fef3c7;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .donation-info {
+    flex-grow: 1;
+  }
+
+  .donation-title {
+    margin: 0;
+    font-size: 16px;
+    color: #2d3748;
+    font-weight: 600;
+  }
+
+  .donation-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 13px;
+    color: #718096;
+  }
+
+  /* El Botón "Nice" de PayPal */
+  .donation-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #0070ba; /* Azul oficial de PayPal */
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 20px; /* Bordes redondeados estilo PayPal */
+    box-shadow: 0 4px 12px rgba(0, 112, 186, 0.2);
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+  }
+
+  /* Efecto al pasar el cursor */
+  .donation-btn:hover {
+    background-color: #005ea6;
+    box-shadow: 0 6px 16px rgba(0, 112, 186, 0.3);
+    transform: translateY(-1px);
+  }
+
+  /* Efecto al hacer clic */
+  .donation-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(0, 112, 186, 0.2);
+  }
+
+  /* Adaptabilidad para pantallas móviles pequeñas */
+  @media (max-width: 480px) {
+    .donation-card {
+      flex-direction: column;
+      text-align: center;
+      align-items: center;
+    }
+    .donation-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  
 @media (max-width: 760px) {
   .firmware-grid, .workflow { grid-template-columns: 1fr; }
   .workflow div { text-align: left; display: flex; align-items: center; gap: 10px; }

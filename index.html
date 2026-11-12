@@ -1,228 +1,442 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MarioKart ESP32 RC - Instalador</title>
-  <link rel="stylesheet" href="assets/style.css">
-</head>
-<body>
-  <main class="container">
-    <header class="hero" >
-      <div class="logo">🏎️</div>
-      <div>
-        <h1>MarioKart ESP32 RC</h1>
-        <p>Instalador y guía de armado</p>
-      </div>
-      <div class="logo">🕹️</div>
-    </header>
-
-    <section class="card intro-card">
-      <h2>Instalador del proyecto</h2>
-      <p class="hint">
-        Selecciona el dispositivo, conecta su ESP32 por USB y sigue los pasos.
-        También encontrarás aquí la guía rápida de conexiones y la instalación opcional de Rumble.
-      </p>
-      <div class="browser-note">🌐 Requiere Google Chrome o Microsoft Edge en escritorio.</div>
-    </section>
-
-    <section class="card">
-      <h2>⚙️ 1. Selecciona el dispositivo</h2>
-      <div class="firmware-grid">
-        <button class="firmware-card active" data-firmware="receiver">
-          <span>🏎️</span>
-          <strong>Receiver</strong>
-          <small>ESP32 instalado en el Kart</small>
-        </button>
-        <button class="firmware-card" data-firmware="transmitter">
-          <span>🎮</span>
-          <strong>Transmitter</strong>
-          <small>ESP32 del control remoto</small>
-        </button>
-      </div>
-      <div class="version" id="firmwareVersion">Firmware: Receiver · versión pendiente</div>
-    </section>
-
-    <section class="card">
-      <h2>🔌 2. Conecta el ESP32</h2>
-      <p class="hint">Conecta el ESP32 por USB y permite el acceso al puerto serial cuando el navegador lo solicite.</p>
-      <button id="connectButton" class="primary">🔌 CONECTAR ESP32</button>
-      <div id="deviceInfo" class="device-info">Sin dispositivo conectado.</div>
-
-      <div id="receiverMacPanel" class="config-panel hidden">
-        <div class="panel-title">📡 MAC del Receiver</div>
-        <p class="hint small">Esta es la MAC física del ESP32 conectado. Es la dirección que deberá conocer el Transmitter.</p>
-        <div class="mac-display">
-          <code id="receiverMac">--:--:--:--:--:--</code>
-          <button id="copyMacButton" class="copy-button" type="button">📋 Copiar MAC</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MarioKart ESP32 RC - Instalador</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <div class="logo">🏎️</div>
+        <div>
+          <h1>MarioKart ESP32 RC</h1>
+          <p>Instalador y guía de armado</p>
         </div>
-      </div>
+        <div class="logo">🕹️</div>
+      </header>
 
-      <div id="receiverLedConfigPanel" class="config-panel hidden">
-        <div class="panel-title">💡 Cantidad de LEDs del Receiver</div>
-        <p class="hint small">
-          Configura cuántos LEDs tiene instalada cada tira WS2812B. Los valores se guardan en la memoria NVS del Receiver y se aplican al reiniciarlo.
+      <section class="card intro-card">
+        <h2>Instalador del proyecto</h2>
+        <p class="hint">
+          Selecciona el dispositivo, conecta su ESP32 por USB y sigue los pasos.
+          También encontrarás aquí la guía rápida de conexiones y la instalación
+          opcional de Rumble.
         </p>
-        <div class="led-count-grid">
-          <div>
-            <label for="ambientLedCount">Luces ambientales (GPIO 19)</label>
-            <input id="ambientLedCount" type="number" min="1" max="255" step="1" value="6" inputmode="numeric">
-          </div>
-          <div>
-            <label for="rearLedCount">Luces traseras (GPIO 4)</label>
-            <input id="rearLedCount" type="number" min="1" max="255" step="1" value="2" inputmode="numeric">
-          </div>
+        <div class="browser-note">
+          🌐 Requiere Google Chrome o Microsoft Edge en escritorio.
         </div>
-        <button id="saveLedCountsButton" class="secondary full" type="button" disabled>💾 GUARDAR CANTIDAD DE LEDS</button>
-        <div id="ledConfigStatus" class="status compact">Instala primero el firmware del Receiver para consultar o guardar la configuración.</div>
-        <p class="hint small">Rango permitido por cada tira: 1 a 255 LEDs. Verifica que el firmware del Receiver incluya la configuración MKCFG de LEDs.</p>
-      </div>
+      </section>
 
-      <div id="transmitterConfigPanel" class="config-panel hidden">
-        <div class="panel-title">🎯 Receiver del Transmitter</div>
-        <p class="hint small">
-          Introduce la MAC del Receiver con el que deseas comunicar este Transmitter.
-          Puedes copiarla desde la sección anterior si acabas de instalar el Receiver.
+      <section class="card">
+        <h2>⚙️ 1. Selecciona el dispositivo</h2>
+        <div class="firmware-grid">
+          <button class="firmware-card active" data-firmware="receiver">
+            <span>🏎️</span>
+            <strong>Receiver</strong>
+            <small>ESP32 instalado en el Kart</small>
+          </button>
+          <button class="firmware-card" data-firmware="transmitter">
+            <span>🎮</span>
+            <strong>Transmitter</strong>
+            <small>ESP32 del control remoto</small>
+          </button>
+        </div>
+        <div class="version" id="firmwareVersion">
+          Firmware: Receiver · versión pendiente
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>🔌 2. Conecta el ESP32</h2>
+        <p class="hint">
+          Conecta el ESP32 por USB y permite el acceso al puerto serial cuando
+          el navegador lo solicite.
         </p>
-        <label for="customMacInput">MAC del Receiver</label>
-        <div class="mac-input-row">
-          <input id="customMacInput" type="text" maxlength="17" inputmode="text" autocomplete="off" spellcheck="false" placeholder="AA:BB:CC:DD:EE:FF">
-          <button id="clearMacButton" class="secondary" type="button">Limpiar</button>
+        <button id="connectButton" class="primary">🔌 CONECTAR ESP32</button>
+        <div id="deviceInfo" class="device-info">
+          Sin dispositivo conectado.
         </div>
-        <div id="macValidation" class="field-message"></div>
-        <button id="saveMacButton" class="secondary full" type="button" disabled>💾 GUARDAR MAC EN TRANSMITTER</button>
-        <div id="macSaveStatus" class="status compact">La MAC se configurará después de instalar el firmware.</div>
-      </div>
-    </section>
 
-    <section class="card">
-      <h2>📡 3. Instala el firmware</h2>
-      <p id="installHint" class="hint">Conecta el ESP32 y presiona instalar.</p>
-      <button id="flashButton" class="primary" disabled>🚀 INSTALAR FIRMWARE</button>
-
-      <div class="progress-wrap">
-        <div class="progress-bar"><div id="progressBar"></div></div>
-        <div id="progressText">0%</div>
-      </div>
-
-      <div id="status" class="status">Listo.</div>
-    </section>
-
-    <section id="connectionGuide" class="card guide-card">
-      <h2>🔧 4. Mini guía de conexiones</h2>
-      <p class="hint">Consulta qué función corresponde a cada pin antes de soldar.</p>
-
-      <div class="guide-tabs">
-        <button class="guide-tab active" data-guide="receiver">🏎️ Receiver</button>
-        <button class="guide-tab" data-guide="transmitter">🎮 Transmitter</button>
-      </div>
-
-      <div id="guideReceiver" class="guide-content active">
-        <h3>Receiver — ESP32 del Kart</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Función</th><th>Pin ESP32</th><th>Conexión</th></tr></thead>
-            <tbody>
-              <tr><td>Motor izquierdo — IN1</td><td><code>GPIO 26</code></td><td>TB6612FNG AIN1</td></tr>
-              <tr><td>Motor izquierdo — IN2</td><td><code>GPIO 27</code></td><td>TB6612FNG AIN2</td></tr>
-              <tr><td>Motor izquierdo — PWM</td><td><code>GPIO 25</code></td><td>TB6612FNG PWMA</td></tr>
-              <tr><td>Motor derecho — IN1</td><td><code>GPIO 33</code></td><td>TB6612FNG BIN1</td></tr>
-              <tr><td>Motor derecho — IN2</td><td><code>GPIO 32</code></td><td>TB6612FNG BIN2</td></tr>
-              <tr><td>Motor derecho — PWM</td><td><code>GPIO 14</code></td><td>TB6612FNG PWMB</td></tr>
-              <tr><td>Luces traseras</td><td><code>GPIO 4</code></td><td>WS2812B DIN (opcional)</td></tr>
-              <tr><td>Luces ambiente</td><td><code>GPIO 19</code></td><td>WS2812B DIN (opcional)</td></tr>              
-            </tbody>
-          </table>
+        <div id="receiverMacPanel" class="config-panel hidden">
+          <div class="panel-title">📡 MAC del Receiver</div>
+          <p class="hint small">
+            Esta es la MAC física del ESP32 conectado. Es la dirección que
+            deberá conocer el Transmitter.
+          </p>
+          <div class="mac-display">
+            <code id="receiverMac">--:--:--:--:--:--</code>
+            <button id="copyMacButton" class="copy-button" type="button">
+              📋 Copiar MAC
+            </button>
+          </div>
         </div>
-        <div class="wiring-notes">
-          <strong>TB6612FNG:</strong> STBY → 3.3 V · VCC → 3.3 V · VM → alimentación de motores · GND → tierra común.
+
+        <div id="receiverLedConfigPanel" class="config-panel hidden">
+          <div class="panel-title">💡 Cantidad de LEDs del Receiver</div>
+          <p class="hint small">
+            Configura cuántos LEDs tiene instalada cada tira WS2812B. Los
+            valores se guardan en la memoria NVS del Receiver y se aplican al
+            reiniciarlo.
+          </p>
+          <div class="led-count-grid">
+            <div>
+              <label for="ambientLedCount">Luces ambientales (GPIO 19)</label>
+              <input
+                id="ambientLedCount"
+                type="number"
+                min="1"
+                max="255"
+                step="1"
+                value="6"
+                inputmode="numeric"
+              />
+            </div>
+            <div>
+              <label for="rearLedCount">Luces traseras (GPIO 4)</label>
+              <input
+                id="rearLedCount"
+                type="number"
+                min="1"
+                max="255"
+                step="1"
+                value="2"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
+          <button
+            id="saveLedCountsButton"
+            class="secondary full"
+            type="button"
+            disabled
+          >
+            💾 GUARDAR CANTIDAD DE LEDS
+          </button>
+          <div id="ledConfigStatus" class="status compact">
+            Instala primero el firmware del Receiver para consultar o guardar la
+            configuración.
+          </div>
+          <p class="hint small">
+            Rango permitido por cada tira: 1 a 255 LEDs. Verifica que el
+            firmware del Receiver incluya la configuración MKCFG de LEDs.
+          </p>
         </div>
-        <div class="warning">⚠️ No conectes un motor directamente a un GPIO del ESP32. Utiliza el driver correspondiente.</div>
-      </div>
 
-      <div id="guideTransmitter" class="guide-content">
-        <h3>Transmitter — ESP32 del control</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Función</th><th>Pin</th><th>Conexión / nota</th></tr></thead>
-            <tbody>              
-              <tr><td>Forward</td><td><code>GPIO 13</code></td><td>Botón para mover el coche hacia adelante</td></tr>
-              <tr><td>Reverse</td><td><code>GPIO 12</code></td><td>Botón para mover el coche hacia atrás</td></tr>
-              <tr><td>Left</td><td><code>GPIO 14</code></td><td>Botón para mover el coche a la izquierda</td></tr>
-              <tr><td>Right</td><td><code>GPIO 27</code></td><td>Botón para mover el coche a la derecha</td></tr>
-              <tr><td>Perfil/Mode</td><td><code>GPIO 25</code></td><td>Botón para cambiar de perfil o modo</td></tr>
-              <tr><td>Turbo</td><td><code>GPIO 26</code></td><td>Botón para activar el modo turbo</td></tr>              
-              <tr><td>Status Led</td><td><code>GPIO 5</code></td><td>Pin para conectar el led de estado (color según el perfil / Turbo, opcional)</td></tr>
-              <tr><td>Rumble / Haptic</td><td><code>GPIO 4</code></td><td>Pin para activar el motor de vibración (opcional)</td></tr>              
-            </tbody>
-          </table>
+        <div id="transmitterConfigPanel" class="config-panel hidden">
+          <div class="panel-title">🎯 Receiver del Transmitter</div>
+          <p class="hint small">
+            Introduce la MAC del Receiver con el que deseas comunicar este
+            Transmitter. Puedes copiarla desde la sección anterior si acabas de
+            instalar el Receiver.
+          </p>
+          <label for="customMacInput">MAC del Receiver</label>
+          <div class="mac-input-row">
+            <input
+              id="customMacInput"
+              type="text"
+              maxlength="17"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="AA:BB:CC:DD:EE:FF"
+            />
+            <button id="clearMacButton" class="secondary" type="button">
+              Limpiar
+            </button>
+          </div>
+          <div id="macValidation" class="field-message"></div>
+          <button
+            id="saveMacButton"
+            class="secondary full"
+            type="button"
+            disabled
+          >
+            💾 GUARDAR MAC EN TRANSMITTER
+          </button>
+          <div id="macSaveStatus" class="status compact">
+            La MAC se configurará después de instalar el firmware.
+          </div>
         </div>
-        <p class="hint small">El instalador documenta aquí los pines confirmados por el firmware. No se muestran GPIOs no verificados para evitar soldaduras incorrectas.</p>
+      </section>
 
-        <div class="rumble-box">
-          <h3>📳 Habilitar Rumble</h3>
-          <p>El Rumble es opcional. El firmware utiliza <code>GPIO 4</code> como salida de control.</p>
-          <ol>
-            <li><code>GPIO 4</code> → resistencia de aproximadamente <strong>1 kΩ</strong>.</li>
-            <li>La resistencia controla la base/gate de un transistor o MOSFET adecuado.</li>
-            <li>El transistor conmuta el motor de vibración desde su alimentación.</li>
-            <li>Comparte <strong>GND</strong> entre el ESP32 y el circuito del motor.</li>
-            <li>Coloca un <strong>diodo de protección</strong> en paralelo con el motor cuando corresponda al circuito inductivo.</li>
-          </ol>
-          <div class="warning">⚠️ Nunca alimentes el motor de vibración directamente desde GPIO 4.</div>
+      <section class="card">
+        <h2>📡 3. Instala el firmware</h2>
+        <p id="installHint" class="hint">
+          Conecta el ESP32 y presiona instalar.
+        </p>
+        <button id="flashButton" class="primary" disabled>
+          🚀 INSTALAR FIRMWARE
+        </button>
+
+        <div class="progress-wrap">
+          <div class="progress-bar"><div id="progressBar"></div></div>
+          <div id="progressText">0%</div>
         </div>
-      </div>
-    </section>
 
-    <section class="card workflow-card">
-      <h2>📖 Orden recomendado</h2>
-      <div class="workflow">
-        <div><b>1</b><span>Arma el Receiver</span></div>
-        <div><b>2</b><span>Instala Receiver y copia su MAC</span></div>
-        <div><b>3</b><span>Arma el Transmitter</span></div>
-        <div><b>4</b><span>Instala Transmitter y configura la MAC</span></div>
-        <div><b>5</b><span>Enciende ambos ESP32 y prueba</span></div>
-      </div>
-    </section>
+        <div id="status" class="status">Listo.</div>
+      </section>
 
-    <section class="card">
-    <h2>💚 Aplicación Android</h2>
+      <section id="connectionGuide" class="card guide-card">
+        <h2>🔧 4. Mini guía de conexiones</h2>
+        <p class="hint">
+          Consulta qué función corresponde a cada pin antes de soldar.
+        </p>
 
-    <p>
-        Descarga la aplicación para controlar
-        tu MarioKart ESP32 RC.
-    </p>
+        <div class="guide-tabs">
+          <button class="guide-tab active" data-guide="receiver">
+            🏎️ Receiver
+          </button>
+          <button class="guide-tab" data-guide="transmitter">
+            🎮 Transmitter
+          </button>
+        </div>
 
-    <a id="apkButton" 
-        class="secondary disabled" 
-        aria-disabled="true"
-        class="firmware-card active"
-        href="./downloads/MarioKart.Android.apk"
-        class="download-button"
-        download>
-        <span>🤖📱⬇</span>
-        DESCARGAR APK
-    </a>
+        <div id="guideReceiver" class="guide-content active">
+          <h3>Receiver — ESP32 del Kart</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Función</th>
+                  <th>Pin ESP32</th>
+                  <th>Conexión</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Motor izquierdo — IN1</td>
+                  <td><code>GPIO 26</code></td>
+                  <td>TB6612FNG AIN1</td>
+                </tr>
+                <tr>
+                  <td>Motor izquierdo — IN2</td>
+                  <td><code>GPIO 27</code></td>
+                  <td>TB6612FNG AIN2</td>
+                </tr>
+                <tr>
+                  <td>Motor izquierdo — PWM</td>
+                  <td><code>GPIO 25</code></td>
+                  <td>TB6612FNG PWMA</td>
+                </tr>
+                <tr>
+                  <td>Motor derecho — IN1</td>
+                  <td><code>GPIO 33</code></td>
+                  <td>TB6612FNG BIN1</td>
+                </tr>
+                <tr>
+                  <td>Motor derecho — IN2</td>
+                  <td><code>GPIO 32</code></td>
+                  <td>TB6612FNG BIN2</td>
+                </tr>
+                <tr>
+                  <td>Motor derecho — PWM</td>
+                  <td><code>GPIO 14</code></td>
+                  <td>TB6612FNG PWMB</td>
+                </tr>
+                <tr>
+                  <td>Luces traseras</td>
+                  <td><code>GPIO 4</code></td>
+                  <td>WS2812B DIN (opcional)</td>
+                </tr>
+                <tr>
+                  <td>Luces ambiente</td>
+                  <td><code>GPIO 19</code></td>
+                  <td>WS2812B DIN (opcional)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="wiring-notes">
+            <strong>TB6612FNG:</strong> STBY → 3.3 V · VCC → 3.3 V · VM →
+            alimentación de motores · GND → tierra común.
+          </div>
+          <div class="warning">
+            ⚠️ No conectes un motor directamente a un GPIO del ESP32. Utiliza el
+            driver correspondiente.
+          </div>
+        </div>
 
+        <div id="guideTransmitter" class="guide-content">
+          <h3>Transmitter — ESP32 del control</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Función</th>
+                  <th>Pin</th>
+                  <th>Conexión / nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Forward</td>
+                  <td><code>GPIO 13</code></td>
+                  <td>Botón para mover el coche hacia adelante</td>
+                </tr>
+                <tr>
+                  <td>Reverse</td>
+                  <td><code>GPIO 12</code></td>
+                  <td>Botón para mover el coche hacia atrás</td>
+                </tr>
+                <tr>
+                  <td>Left</td>
+                  <td><code>GPIO 14</code></td>
+                  <td>Botón para mover el coche a la izquierda</td>
+                </tr>
+                <tr>
+                  <td>Right</td>
+                  <td><code>GPIO 27</code></td>
+                  <td>Botón para mover el coche a la derecha</td>
+                </tr>
+                <tr>
+                  <td>Perfil/Mode</td>
+                  <td><code>GPIO 25</code></td>
+                  <td>Botón para cambiar de perfil o modo</td>
+                </tr>
+                <tr>
+                  <td>Turbo</td>
+                  <td><code>GPIO 26</code></td>
+                  <td>Botón para activar el modo turbo</td>
+                </tr>
+                <tr>
+                  <td>Status Led</td>
+                  <td><code>GPIO 5</code></td>
+                  <td>
+                    Pin para conectar el led de estado (color según el perfil /
+                    Turbo, opcional)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Rumble / Haptic</td>
+                  <td><code>GPIO 4</code></td>
+                  <td>Pin para activar el motor de vibración (opcional)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="hint small">
+            El instalador documenta aquí los pines confirmados por el firmware.
+            No se muestran GPIOs no verificados para evitar soldaduras
+            incorrectas.
+          </p>
 
+          <div class="rumble-box">
+            <h3>📳 Habilitar Rumble</h3>
+            <p>
+              El Rumble es opcional. El firmware utiliza
+              <code>GPIO 4</code> como salida de control.
+            </p>
+            <ol>
+              <li>
+                <code>GPIO 4</code> → resistencia de aproximadamente
+                <strong>1 kΩ</strong>.
+              </li>
+              <li>
+                La resistencia controla la base/gate de un transistor o MOSFET
+                adecuado.
+              </li>
+              <li>
+                El transistor conmuta el motor de vibración desde su
+                alimentación.
+              </li>
+              <li>
+                Comparte <strong>GND</strong> entre el ESP32 y el circuito del
+                motor.
+              </li>
+              <li>
+                Coloca un <strong>diodo de protección</strong> en paralelo con
+                el motor cuando corresponda al circuito inductivo.
+              </li>
+            </ol>
+            <div class="warning">
+              ⚠️ Nunca alimentes el motor de vibración directamente desde GPIO
+              4.
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <small>
-        Compatible con dispositivos Android.
-    </small>
-</section>
+      <section class="card workflow-card">
+        <h2>📖 Orden recomendado</h2>
+        <div class="workflow">
+          <div><b>1</b><span>Arma el Receiver</span></div>
+          <div><b>2</b><span>Instala Receiver y copia su MAC</span></div>
+          <div><b>3</b><span>Arma el Transmitter</span></div>
+          <div><b>4</b><span>Instala Transmitter y configura la MAC</span></div>
+          <div><b>5</b><span>Enciende ambos ESP32 y prueba</span></div>
+        </div>
+      </section>
 
-    <details class="card logs-card">
-      <summary>Mostrar registro técnico</summary>
-      <pre id="log"></pre>
-    </details>
+      <section class="card">
+        <h2>💚 Aplicación Android</h2>
 
-    <footer>
-      <p>MarioKart ESP32 RC · Firmware Installer</p>
-      <p>Web Serial + esptool-js · ESP32 Dev Module · 4 MB · QIO · 80 MHz</p>
-      <p>Navysoluciones® : Narciso Iván Cisneros Acosta</p>
-    </footer>
-  </main>
+        <p>Descarga la aplicación para controlar tu MarioKart ESP32 RC.</p>
 
-  <script type="module" src="assets/app.js"></script>
-</body>
+        <a
+          id="apkButton"
+          class="secondary disabled"
+          aria-disabled="true"
+          class="firmware-card active"
+          href="./downloads/MarioKart.Android.apk"
+          class="download-button"
+          download
+        >
+          <span>🤖📱⬇</span>
+          DESCARGAR APK
+        </a>
+
+        <small> Compatible con dispositivos Android. </small>
+      </section>
+
+      <details class="card logs-card">
+        <summary>Mostrar registro técnico</summary>
+        <pre id="log"></pre>
+      </details>
+
+      <!-- PANEL DESPLEGABLE 4: Donaciones y apoyos -->
+      <section class="card">
+        <details class="donation-panel">
+          <summary>Donaciones y Apoyos</summary>
+          <div class="panel-content">
+            <div class="donation-card">
+              <div class="donation-icon">☕</div>
+              <div class="donation-info">
+                <h3 class="donation-title">¡Invítame un café!</h3>
+                <p class="donation-subtitle">Buy me a coffee via PayPal</p>
+              </div>
+              <a
+                href="https://www.paypal.com/donate/?hosted_button_id=4SB5BX42TPGBJ"
+                target="_blank"
+                class="donation-btn"
+              >
+                <span>Donar ahora</span>
+                <svg
+                  xmlns="http://w3.org"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <footer>
+        <p>MarioKart ESP32 RC · Firmware Installer</p>
+        <p>Web Serial + esptool-js · ESP32 Dev Module · 4 MB · QIO · 80 MHz</p>
+        <p>Navysoluciones® : Narciso Iván Cisneros Acosta</p>
+      </footer>
+    </main>
+
+    <script type="module" src="assets/app.js"></script>
+  </body>
 </html>
